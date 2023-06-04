@@ -1,0 +1,17 @@
+{
+    "owner": "Chillymosh",
+    "twitch": {
+      "token": "",
+      "refresh_token": "",
+      "channel": "chillymosh",
+      "nick": "botname",
+      "client_id": "",
+      "client_secret": "",
+      "prefix": "!"
+    },
+    "commands": {
+      "hello": "Why, hello there $user",
+      "discord": "My discord server is: ...",
+      "youtube": "My YouTube is: ..."
+    }
+  }
