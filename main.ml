@@ -30,6 +30,7 @@ type config = {
 
 type commands = (string * string) list option
 
+(* This is just a bit of fun for a codejam *)
 let print_ascii_art () : unit =
   print_endline "@@@@@@@@@@@@@@@@@@@@@@@@@@&&####&&@@@@@@@@@@@@@@@@@@@@@@@@@@";
   print_endline "@@@@@@@@@@@@@@@@@@@@@&BGGGGGPPGGGGBBB##@@@@@@@@@@@@@@@@@@@@@";
@@ -213,7 +214,7 @@ let validate_token token =
   let status = Response.status response |> Cohttp.Code.code_of_status in
   let is_valid = status = 200 in
   if is_valid then (
-    let () = printf "Token validation successful!\n%s\n" body_string in
+    let () = printf "Token validation successful!\n" in
     return is_valid
   )
   else (
@@ -297,7 +298,7 @@ let rec run () =
          begin
            match refresh_result with
            | Ok (new_access_token, new_refresh_token) ->
-             printf "Refreshed token: %s\n" new_access_token;
+             printf "Refreshed token and updated the config file\n";
              let twitch = {twitch with token = new_access_token; refresh_token = new_refresh_token} in
              let config = {config with twitch = Some twitch} in
              let%bind () = write_json_file filename (config_to_json config) in
