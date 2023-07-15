@@ -30,7 +30,8 @@ This saves you having to do the manual compile below
 
 To compile directly after you have installed oCaml and the dependencies via opam:
  ```
- ocamlfind ocamlopt -thread -package async,ppx_let,yojson,cohttp,cohttp-async -linkpkg -o your_app_name main.ml
+ ocamlfind ocamlopt -thread -package async,ppx_let,yojson,cohttp,cohttp-async -c main.mli
+ ocamlfind ocamlopt -thread -package async,ppx_let,yojson,cohttp,cohttp-async -linkpkg -o chatbot main.ml
  ```
  
  If you use $user in a command response then it will replace it with the name of the chatter who invoked the command.
@@ -49,4 +50,10 @@ depends: [
   "yojson" {>= "2.1.0"}
   "core_unix" {>= "v0.15.2"}
 ]
+```
+
+Manual build
+```
+ocamlfind ocamlopt -thread -package async,core,websocket-async,core_unix.command_unix,cohttp,cohttp-async,yojson,ppx_let -c main.mli
+ocamlfind ocamlopt -thread -package async,core,websocket-async,core_unix.command_unix,cohttp,cohttp-async,yojson,ppx_let -linkpkg -o pubsub main.ml
 ```
