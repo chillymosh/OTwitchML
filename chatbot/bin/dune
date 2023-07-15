@@ -1,0 +1,6 @@
+(executable
+ (public_name oTwitchML)
+ (name main)
+ (libraries oTwitchML core async yojson cohttp cohttp-async websocket-async)
+ (preprocess
+  (pps ppx_let)))

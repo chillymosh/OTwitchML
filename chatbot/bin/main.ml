@@ -13,22 +13,26 @@ type priv_message = {
 }
 
 type twitch = {
-  token : string ;
+  irc_token : string ;
+  irc_refresh_token : string option;
   channel : string ;
   nick : string ; 
-  refresh_token : string option;
   client_id : string option;
   client_secret : string option;
-  prefix : string option;
+  prefix : string;
+  pubsub_token : string option;
+  pubsub_refresh_token : string option;
 }
 
+[@@@ocaml.warning "-69"]
 type config = {
   owner : string option;
   twitch : twitch option;
   commands : (string * string) list option;
+  pubsub_topics : string list option;
 }
+[@@@ocaml.warning "+69"]
 
-type commands = (string * string) list option
 
 (* This is just a bit of fun for a codejam *)
 let print_ascii_art () : unit =
@@ -75,47 +79,58 @@ let write_json_file filename json =
   Writer.save filename ~contents:content
 
 let extract_twitch json =
-  let token = json |> member "token" |> to_string in
+  let irc_token = json |> member "irc_token" |> to_string in
   let channel = json |> member "channel" |> to_string in
   let nick = json |> member "nick" |> to_string in
-  let refresh_token = json |> member "refresh_token" |> to_string_option in
+  let irc_refresh_token = json |> member "irc_refresh_token" |> to_string_option in
   let client_id = json |> member "client_id" |> to_string_option in
   let client_secret = json |> member "client_secret" |> to_string_option in
-  let prefix = json |> member "prefix" |> to_string_option in
+  let prefix = json |> member "prefix" |> to_string in
+  let pubsub_token = json |> member "pubsub_token" |> to_string_option in
+  let pubsub_refresh_token = json |> member "pubsub_refresh_token" |> to_string_option in
 
-  {token; refresh_token; channel; nick; client_id; client_secret; prefix;}
+  {irc_token; irc_refresh_token ; channel; nick; prefix; pubsub_token; pubsub_refresh_token; client_id; client_secret;}
 
 
 let extract_commands json =
   let pairs = to_assoc json in
   List.map pairs ~f:(fun (key, value) -> (key, to_string value))
 
+let extract_pubsub_topics json =
+  let pairs = to_assoc json in
+  List.map pairs ~f:(fun (key, value) -> key ^ "." ^ Yojson.Basic.Util.to_string value)
+
 let extract_config json =
   let owner = json |> member "owner" |> to_string_option in
   let twitch = json |> member "twitch" |> to_option extract_twitch in
   let commands = json |> member "commands" |> to_option extract_commands in
-  {owner; twitch; commands}
+  let pubsub_topics = json |> member "pubsub_topics" |>  to_option extract_pubsub_topics in
+  { owner; twitch; commands; pubsub_topics}
 
 
 
 let twitch_to_json twitch =
-  `Assoc [("token", `String  twitch.token);
-          ("refresh_token", `String (Option.value ~default:"" twitch.refresh_token));
+  `Assoc [("irc_token", `String  twitch.irc_token);
+          ("irc_refresh_token", `String (Option.value ~default:"" twitch.irc_refresh_token));
           ("channel", `String twitch.channel);
           ("nick", `String  twitch.nick);
           ("client_id", `String (Option.value ~default:"" twitch.client_id));
           ("client_secret", `String (Option.value ~default:"" twitch.client_secret));
-          ("prefix", `String (Option.value ~default:"" twitch.prefix))]
+          ("prefix", `String twitch.prefix);
+          ("pubsub_token", `String (Option.value ~default:"" twitch.pubsub_token));
+          ("pubsub_refresh_token", `String (Option.value ~default:"" twitch.pubsub_refresh_token))]
 
 
 let commands_to_json commands =
   `Assoc (List.map commands ~f:(fun (key, value) -> (key, `String value)))
 
-let config_to_json config =
+let config_to_json config json =
+  let pubsub_topics = json |> member "pubsub_topics" in
   `Assoc [
     ("owner", `String (Option.value ~default:"" config.owner));
     ("twitch", Option.value_map ~default:`Null ~f:twitch_to_json config.twitch);
     ("commands", Option.value_map ~default:`Null ~f:commands_to_json config.commands);
+    ("pubsub_topics", pubsub_topics)
   ]
 
 
@@ -214,7 +229,7 @@ let validate_token token =
   let status = Response.status response |> Cohttp.Code.code_of_status in
   let is_valid = status = 200 in
   if is_valid then (
-    let () = printf "Token validation successful!\n" in
+    let () = printf "Token validation successful!\n%s\n" body_string in
     return is_valid
   )
   else (
@@ -249,7 +264,7 @@ let refresh_user_token client_id client_secret refresh_token =
       | 200 -> 
         let json = Yojson.Basic.from_string body_string in
         let new_access_token = json |> member "access_token" |> to_string in
-        let new_refresh_token = json |> member "refresh_token" |> to_string_option in
+        let new_refresh_token = json |> member "irc_refresh_token" |> to_string_option in
         return (Ok (new_access_token, new_refresh_token))
       | _ -> return (Error ("Failed to refresh token: " ^ body_string))
     end
@@ -265,12 +280,13 @@ let rec run () =
   let config = extract_config json in
   let twitch = Option.value_exn config.twitch in
   let commands = Option.value ~default:[] config.commands in
-  let prefix = Option.value ~default:"!" twitch.prefix in
+  (* let pubsub_topics = Option.value ~default:[] config.pubsub_topics in *)
+  let prefix = twitch.prefix in
   let channel = "#" ^ twitch.channel in
   let nick = twitch.nick in
-  let oauth = "oauth:" ^ twitch.token in
+  let oauth = "oauth:" ^ twitch.irc_token in
 
-  let%bind is_valid = validate_token twitch.token in
+  let%bind is_valid = validate_token twitch.irc_token in
   if is_valid then (
     let%bind (_, reader, writer) = tcp_conn in
     let%bind () = irc_login writer ~channel ~nick ~oauth in
@@ -290,7 +306,7 @@ let rec run () =
       return ()
   )
   else (
-    match twitch.refresh_token, twitch.client_id, twitch.client_secret with
+    match twitch.irc_refresh_token, twitch.client_id, twitch.client_secret with
     | Some refresh_token, Some client_id, Some client_secret ->
       printf "Token validation failed, attempting to refresh token...\n";
       (try
@@ -298,10 +314,10 @@ let rec run () =
          begin
            match refresh_result with
            | Ok (new_access_token, new_refresh_token) ->
-             printf "Refreshed token and updated the config file\n";
-             let twitch = {twitch with token = new_access_token; refresh_token = new_refresh_token} in
+             printf "Refreshed token: %s\n" new_access_token;
+             let twitch = {twitch with irc_token = new_access_token; irc_refresh_token = new_refresh_token} in
              let config = {config with twitch = Some twitch} in
-             let%bind () = write_json_file filename (config_to_json config) in
+             let%bind () = write_json_file filename (config_to_json config json) in
              run ()
            | Error message ->
              printf "Failed to refresh token: %s\n" message;

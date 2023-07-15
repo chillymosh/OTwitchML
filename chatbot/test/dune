@@ -1,0 +1,5 @@
+(test
+ (name oTwitchML)
+ (libraries core async yojson cohttp cohttp-async websocket-async)
+ (preprocess
+  (pps ppx_inline_test)))

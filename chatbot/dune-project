@@ -1,0 +1,26 @@
+(lang dune 3.9)
+
+(name oTwitchML)
+
+(generate_opam_files true)
+
+(source
+ (github chillymosh/OTwitchML))
+
+(authors "Chillymosh")
+
+(maintainers "Chillymosh")
+
+(license LICENSE)
+
+(documentation https://url/to/documentation)
+
+(package
+ (name oTwitchML)
+ (synopsis "Simple async oCaml Twitch chatbot")
+ (description "Simple async oCaml Twitch chatbot that handles oauth token refreshing")
+ (depends ocaml dune)
+ (tags
+  (topics "to describe" your project)))
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

@@ -1,0 +1,26 @@
+(lang dune 3.9)
+
+(name ocamlPubsub)
+
+(generate_opam_files true)
+
+(source
+ (github chillymosh/OTwitchML))
+
+(authors "Chillymosh")
+
+(maintainers "Chillymosh")
+
+(license LICENSE)
+
+(documentation https://url/to/documentation)
+
+(package
+ (name ocamlPubsub)
+ (synopsis "Quick async oCaml pubsub implementation")
+ (description "Quick async oCaml pubsub implementation that prints pubsub events you have subscribed to")
+ (depends ocaml dune)
+ (tags
+  (topics "to describe" your project)))
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

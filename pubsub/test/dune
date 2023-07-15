@@ -1,0 +1,5 @@
+(test
+ (name ocamlPubsub)
+ (libraries ocamlPubsub core async websocket-async yojson core_unix.command_unix, cohttp, cohttp-async)
+  (preprocess (pps ppx_let)))
+

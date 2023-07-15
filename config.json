@@ -1,17 +1,22 @@
 {
-    "owner": "Chillymosh",
-    "twitch": {
-      "token": "",
-      "refresh_token": "",
+  "owner": "Chillymosh",
+  "twitch": {
+      "irc_token": "",
+      "irc_refresh_token": "",
       "channel": "chillymosh",
-      "nick": "botname",
+      "nick": "",
       "client_id": "",
       "client_secret": "",
-      "prefix": "!"
-    },
-    "commands": {
-      "hello": "Why, hello there $user",
-      "discord": "My discord server is: ...",
-      "youtube": "My YouTube is: ..."
-    }
+      "prefix": "?",
+      "pubsub_token": "",
+      "pubsub_refresh_token": ""
+  },
+  "commands": {
+      "hello": "Why hello there $user",
+      "discord": "My discord server is: "
+  },
+  "pubsub_topics": {
+      "chat_moderator_actions": "21734222.21734222",
+      "channel-points-channel-v1": "21734222"
   }
+}
